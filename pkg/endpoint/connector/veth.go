@@ -27,6 +27,8 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
+// SetupVethRemoteNs renames the netdevice in the target namespace to the
+// provided dstIfName.
 func SetupVethRemoteNs(netNs ns.NetNS, srcIfName, dstIfName string) (int, int, error) {
 	return 0, 0, netNs.Do(func(_ ns.NetNS) error {
 		err := link.Rename(srcIfName, dstIfName)

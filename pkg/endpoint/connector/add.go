@@ -59,7 +59,7 @@ func randIfStr(num int) string {
 	return string(str)
 }
 
-// EndpointRandIfName returns a random, temporary interface name for the
+// Endpoint2TempRandIfName returns a random, temporary interface name for the
 // given endpointID. This is similar to Endpoint2TempIfName() but uses a
 // random string instead of endpoint ID.
 func Endpoint2TempRandIfName() string {
