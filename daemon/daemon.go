@@ -1261,11 +1261,6 @@ func (h *getConfig) Handle(params GetConfigParams) middleware.Responder {
 		PolicyEnforcement: policy.GetPolicyEnabled(),
 	}
 
-	datapathModeAttrs := &models.DaemonConfigurationStatusDatapathModeAttrs{}
-	if option.Config.DatapathMode == models.DatapathModeIpvlan {
-		datapathModeAttrs.MasterDevIfIndex = int64(option.Config.IPVlanMasterDevIfIndex)
-	}
-
 	status := &models.DaemonConfigurationStatus{
 		Addressing:       node.GetNodeAddressing(),
 		K8sConfiguration: k8s.GetKubeconfigPath(),
@@ -1275,13 +1270,11 @@ func (h *getConfig) Handle(params GetConfigParams) middleware.Responder {
 			Type:    kvStore,
 			Options: kvStoreOpts,
 		},
-		Realized:  spec,
-		DeviceMTU: int64(d.mtuConfig.GetDeviceMTU()),
-		RouteMTU:  int64(d.mtuConfig.GetRouteMTU()),
-		DatapathMode: &models.DaemonConfigurationStatusDatapathMode{
-			Name:  option.Config.DatapathMode,
-			Attrs: datapathModeAttrs,
-		},
+		Realized:      spec,
+		DeviceMTU:     int64(d.mtuConfig.GetDeviceMTU()),
+		RouteMTU:      int64(d.mtuConfig.GetRouteMTU()),
+		DatapathMode:  models.DatapathMode(option.Config.DatapathMode),
+		DeviceIfIndex: int64(option.Config.DeviceIfIndex),
 	}
 
 	cfg := &models.DaemonConfiguration{

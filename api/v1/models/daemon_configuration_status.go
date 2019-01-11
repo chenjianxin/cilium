@@ -24,7 +24,10 @@ type DaemonConfigurationStatus struct {
 	Addressing *NodeAddressing `json:"addressing,omitempty"`
 
 	// datapath mode
-	DatapathMode *DaemonConfigurationStatusDatapathMode `json:"datapathMode,omitempty"`
+	DatapathMode DatapathMode `json:"datapathMode,omitempty"`
+
+	// Device facing cluster/external network interface index
+	DeviceIfIndex int64 `json:"deviceIfIndex,omitempty"`
 
 	// MTU on workload facing devices
 	DeviceMTU int64 `json:"deviceMTU,omitempty"`
@@ -54,6 +57,8 @@ type DaemonConfigurationStatus struct {
 /* polymorph DaemonConfigurationStatus addressing false */
 
 /* polymorph DaemonConfigurationStatus datapathMode false */
+
+/* polymorph DaemonConfigurationStatus deviceIfIndex false */
 
 /* polymorph DaemonConfigurationStatus deviceMTU false */
 
@@ -131,14 +136,11 @@ func (m *DaemonConfigurationStatus) validateDatapathMode(formats strfmt.Registry
 		return nil
 	}
 
-	if m.DatapathMode != nil {
-
-		if err := m.DatapathMode.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("datapathMode")
-			}
-			return err
+	if err := m.DatapathMode.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("datapathMode")
 		}
+		return err
 	}
 
 	return nil
@@ -212,134 +214,6 @@ func (m *DaemonConfigurationStatus) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *DaemonConfigurationStatus) UnmarshalBinary(b []byte) error {
 	var res DaemonConfigurationStatus
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// DaemonConfigurationStatusDatapathMode Datapath mode
-// swagger:model DaemonConfigurationStatusDatapathMode
-
-type DaemonConfigurationStatusDatapathMode struct {
-
-	// attrs
-	Attrs *DaemonConfigurationStatusDatapathModeAttrs `json:"attrs,omitempty"`
-
-	// name
-	Name DatapathMode `json:"name,omitempty"`
-}
-
-/* polymorph DaemonConfigurationStatusDatapathMode attrs false */
-
-/* polymorph DaemonConfigurationStatusDatapathMode name false */
-
-// Validate validates this daemon configuration status datapath mode
-func (m *DaemonConfigurationStatusDatapathMode) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateAttrs(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateName(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *DaemonConfigurationStatusDatapathMode) validateAttrs(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Attrs) { // not required
-		return nil
-	}
-
-	if m.Attrs != nil {
-
-		if err := m.Attrs.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("datapathMode" + "." + "attrs")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *DaemonConfigurationStatusDatapathMode) validateName(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Name) { // not required
-		return nil
-	}
-
-	if err := m.Name.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("datapathMode" + "." + "name")
-		}
-		return err
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *DaemonConfigurationStatusDatapathMode) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *DaemonConfigurationStatusDatapathMode) UnmarshalBinary(b []byte) error {
-	var res DaemonConfigurationStatusDatapathMode
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// DaemonConfigurationStatusDatapathModeAttrs Attributes
-// swagger:model DaemonConfigurationStatusDatapathModeAttrs
-
-type DaemonConfigurationStatusDatapathModeAttrs struct {
-
-	// Master device ifindex (only for ipvlan)
-	MasterDevIfIndex int64 `json:"masterDevIfIndex,omitempty"`
-}
-
-/* polymorph DaemonConfigurationStatusDatapathModeAttrs masterDevIfIndex false */
-
-// Validate validates this daemon configuration status datapath mode attrs
-func (m *DaemonConfigurationStatusDatapathModeAttrs) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *DaemonConfigurationStatusDatapathModeAttrs) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *DaemonConfigurationStatusDatapathModeAttrs) UnmarshalBinary(b []byte) error {
-	var res DaemonConfigurationStatusDatapathModeAttrs
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

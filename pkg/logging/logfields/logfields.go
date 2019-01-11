@@ -189,6 +189,9 @@ const (
 	// Device is the device name
 	Device = "device"
 
+	// DatapathMode is the datapath mode name
+	DatapathMode = "datapathMode"
+
 	// EndpointLabelSelector is a selector for Endpoints by label
 	EndpointLabelSelector = "EndpointLabelSelector"
 

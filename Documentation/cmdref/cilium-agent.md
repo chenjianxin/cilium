@@ -32,9 +32,10 @@ cilium-agent
       --conntrack-garbage-collector-interval uint   Garbage collection interval for the connection tracking table (in seconds) (default 60)
       --container-runtime stringSlice               Sets the container runtime(s) used by Cilium { containerd | crio | docker | none | auto } ( "auto" uses the container runtime found in the order: "docker", "containerd", "crio" ) (default [auto])
       --container-runtime-endpoint map              Container runtime(s) endpoint(s). (default: --container-runtime-endpoint=containerd=/var/run/containerd/containerd.sock, --container-runtime-endpoint=crio=/var/run/crio.sock, --container-runtime-endpoint=docker=unix:///var/run/docker.sock) (default map[])
+      --datapath-mode string                        Datapath mode name (default: veth) (default "veth")
   -D, --debug                                       Enable debugging mode
       --debug-verbose stringSlice                   List of enabled verbose debug groups
-  -d, --device string                               Device facing cluster/external network for direct L3 (non-overlay mode) (default "undefined")
+  -d, --device string                               Device facing cluster/external network for direct L3 (non-overlay mode or ipvlan) (default "undefined")
       --disable-conntrack                           Disable connection tracking
       --disable-endpoint-crd                        Disable use of CiliumEndpoint CRD
       --disable-k8s-services                        Disable east-west K8s load balancing by cilium
@@ -58,7 +59,6 @@ cilium-agent
       --ipv6-node string                            IPv6 address of node (default "auto")
       --ipv6-range string                           Per-node IPv6 endpoint prefix, must be /96, e.g. fd02:1:1::/96 (default "auto")
       --ipv6-service-range string                   Kubernetes IPv6 services CIDR if not inside cluster prefix (default "auto")
-      --ipvlan-master-device string                 IPvlan master device interface name (forces datapath to run in ipvlan mode
       --k8s-api-server string                       Kubernetes api address server (for https use --k8s-kubeconfig-path instead)
       --k8s-kubeconfig-path string                  Absolute path of the kubernetes kubeconfig file
       --k8s-require-ipv4-pod-cidr                   Require IPv4 PodCIDR to be specified in node resource

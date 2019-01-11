@@ -1410,23 +1410,14 @@ definitions:
       deviceMTU:
         description: MTU on workload facing devices
         type: integer
+      deviceIfIndex:
+        description: Device facing cluster/external network interface index
+        type: integer
       routeMTU:
         description: MTU for network facing routes
         type: integer
       datapathMode:
-        description: Datapath mode
-        type: object
-        properties:
-          # TODO(brb) think of better field name || field type name
-          name:
-            "$ref": "#/definitions/DatapathMode"
-          attrs:
-            description: Attributes
-            type: object
-            properties:
-              masterDevIfIndex:
-                description: Master device ifindex (only for ipvlan)
-                type: integer
+        "$ref": "#/definitions/DatapathMode"
   DatapathMode:
     description: Datapath mode
     type: string

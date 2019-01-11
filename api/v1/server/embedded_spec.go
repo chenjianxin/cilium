@@ -1288,23 +1288,11 @@ func init() {
           "$ref": "#/definitions/NodeAddressing"
         },
         "datapathMode": {
-          "description": "Datapath mode",
-          "type": "object",
-          "properties": {
-            "attrs": {
-              "description": "Attributes",
-              "type": "object",
-              "properties": {
-                "masterDevIfIndex": {
-                  "description": "Master device ifindex (only for ipvlan)",
-                  "type": "integer"
-                }
-              }
-            },
-            "name": {
-              "$ref": "#/definitions/DatapathMode"
-            }
-          }
+          "$ref": "#/definitions/DatapathMode"
+        },
+        "deviceIfIndex": {
+          "description": "Device facing cluster/external network interface index",
+          "type": "integer"
         },
         "deviceMTU": {
           "description": "MTU on workload facing devices",

@@ -26,7 +26,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cilium/cilium/api/v1/models"
 	"github.com/cilium/cilium/api/v1/server"
 	"github.com/cilium/cilium/api/v1/server/restapi"
 	"github.com/cilium/cilium/common"
@@ -374,7 +373,10 @@ func init() {
 		"debug", "D", false, "Enable debugging mode")
 	flags.StringSliceVar(&debugVerboseFlags, argDebugVerbose, []string{}, "List of enabled verbose debug groups")
 	flags.StringVarP(&option.Config.Device,
-		"device", "d", "undefined", "Device facing cluster/external network for direct L3 (non-overlay mode)")
+		"device", "d", "undefined", "Device facing cluster/external network for direct L3 (non-overlay mode or ipvlan)")
+	flags.StringVar(&option.Config.DatapathMode, "datapath-mode",
+		defaults.DatapathMode, "Datapath mode name (default: "+defaults.DatapathMode+")")
+	viper.BindEnv(option.MonitorAggregationName, "CILIUM_MONITOR_AGGREGATION_LEVEL")
 	flags.BoolVar(&disableConntrack,
 		"disable-conntrack", false, "Disable connection tracking")
 	flags.Bool(option.LegacyDisableIPv4Name, false, "Disable IPv4 mode")
@@ -463,8 +465,6 @@ func init() {
 	flags.MarkHidden(option.MaxCtrlIntervalName)
 	flags.String(option.MonitorAggregationName, "None",
 		"Level of monitor aggregation for traces from the datapath")
-	flags.String(option.IPVlanMasterDevName, "", "IPvlan master device interface name (forces datapath to run in ipvlan mode")
-	viper.BindEnv(option.MonitorAggregationName, "CILIUM_MONITOR_AGGREGATION_LEVEL")
 	flags.Int(option.MonitorQueueSizeName, defaults.MonitorQueueSize,
 		"Size of the event queue when reading monitor events")
 	viper.BindEnv(option.MonitorQueueSizeName, option.MonitorQueueSizeNameEnv)
@@ -760,10 +760,29 @@ func initEnv(cmd *cobra.Command) {
 
 	option.Config.NAT46Prefix = r
 
-	// If device has been specified, use it to derive better default
-	// allocation prefixes
+	if name := option.Config.Device; name != "undefined" {
+		link, err := netlink.LinkByName(name)
+		if err != nil {
+			log.WithError(err).WithField(logfields.Device, name).Fatal("Cannot find device interface")
+		}
+		option.Config.DeviceIfIndex = link.Attrs().Index
+	}
+
 	if option.Config.Device != "undefined" {
 		node.InitDefaultPrefix(option.Config.Device)
+	}
+
+	switch option.Config.DatapathMode {
+	case "veth":
+		// If device has been specified, use it to derive better default
+		// allocation prefixes
+		if option.Config.Device != "undefined" {
+			node.InitDefaultPrefix(option.Config.Device)
+		}
+	case "ipvlan":
+		// TODO(brb) check flags compatibility
+	default:
+		log.WithField(logfields.DatapathMode, option.Config.DatapathMode).Fatal("Invalid datapath mode")
 	}
 
 	if v6Address != "auto" {
@@ -824,19 +843,6 @@ func initEnv(cmd *cobra.Command) {
 	if err != nil {
 		log.WithError(err).Fatal("Invalid sidecar-istio-proxy-image regular expression")
 		return
-	}
-
-	// TODO(brb): move to somewhere above
-	if name := viper.GetString(option.IPVlanMasterDevName); name != "" {
-		link, err := netlink.LinkByName(name)
-		if err != nil {
-			log.WithError(err).WithField(logfields.Device, name).Fatal("Cannot find ipvlan master device")
-		}
-		option.Config.IPVlanMasterDevIfIndex = link.Attrs().Index
-		// TODO(brb): use enum for the mode
-		option.Config.DatapathMode = "ipvlan"
-	} else {
-		option.Config.DatapathMode = "veth"
 	}
 }
 
@@ -910,7 +916,7 @@ func runDaemon() {
 	}
 
 	// Currently, cilium-health cannot run in ipvlan mode
-	if option.Config.DatapathMode != models.DatapathModeIpvlan {
+	if option.Config.DatapathMode != "ipvlan" {
 		d.initHealth()
 	}
 

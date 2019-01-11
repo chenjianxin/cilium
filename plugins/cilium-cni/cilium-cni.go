@@ -397,11 +397,11 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return err
 	}
 
-	if daemonConfig.Status.DatapathMode.Name == models.DatapathModeVeth {
+	if daemonConfig.Status.DatapathMode == models.DatapathModeVeth {
 		panic("TODO(brb): let's assume ipvlan-only for now")
 	}
 
-	index := int(daemonConfig.Status.DatapathMode.Attrs.MasterDevIfIndex)
+	index := int(daemonConfig.Status.DeviceIfIndex)
 
 	// TODO(brb): SetupIpvlanMaster is dead code
 	//// Just for testing, we add a 2nd device in parallel, make it an
