@@ -211,33 +211,6 @@ func getIpvlanMasterName() string {
 	return hostInterfacePrefix + "_master"
 }
 
-func SetupIpvlanMaster() (int, error) {
-	var err error
-
-	masterIfName := getIpvlanMasterName()
-	master := &netlink.Dummy{
-		LinkAttrs: netlink.LinkAttrs{
-			Name: masterIfName,
-		},
-	}
-
-	link, err := netlink.LinkByName(masterIfName)
-	if err == nil {
-		base := link.Attrs()
-		master.Index = base.Index
-	} else {
-		if err = netlink.LinkAdd(master); err != nil {
-			return 0, fmt.Errorf("unable to create ipvlan master device: %s", err)
-		}
-	}
-
-	if err = netlink.LinkSetUp(link); err != nil {
-		return 0, fmt.Errorf("unable to bring up ipvlan: %s", err)
-	}
-
-	return master.Index, nil
-}
-
 func SetupIpvlan(id string, mtu int, masterDev int, ep *models.EndpointChangeRequest) (*netlink.IPVlan, *netlink.Link, string, error) {
 	if id == "" {
 		return nil, nil, "", fmt.Errorf("invalid: empty ID")

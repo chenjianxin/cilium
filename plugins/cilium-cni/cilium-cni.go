@@ -366,8 +366,8 @@ func cmdAdd(args *skel.CmdArgs) error {
 		K8sNamespace: string(cniArgs.K8S_POD_NAMESPACE),
 	}
 
-	// TODO(brb): move to a helper function
-	if false {
+	switch conf.DatapathMode {
+	case "veth":
 		veth, peer, tmpIfName, err := connector.SetupVeth(ep.ContainerID, int(conf.DeviceMTU), ep)
 		if err != nil {
 			return err
@@ -388,55 +388,36 @@ func cmdAdd(args *skel.CmdArgs) error {
 		if err != nil {
 			return err
 		}
-	}
+	case "ipvlan":
+		index := int(conf.DeviceIfIndex)
 
-	//XXX/START
-
-	daemonConfig, err := c.ConfigGet()
-	if err != nil {
-		return err
-	}
-
-	if daemonConfig.Status.DatapathMode == models.DatapathModeVeth {
-		panic("TODO(brb): let's assume ipvlan-only for now")
-	}
-
-	index := int(daemonConfig.Status.DeviceIfIndex)
-
-	// TODO(brb): SetupIpvlanMaster is dead code
-	//// Just for testing, we add a 2nd device in parallel, make it an
-	//// interface in future to select one.
-	//index, err := connector.SetupIpvlanMaster()
-	//if err != nil {
-	//	return err
-	//}
-
-	ipvlan, link, tmpIfName, err := connector.SetupIpvlan(ep.ContainerID, int(conf.DeviceMTU), index, ep)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
+		ipvlan, link, tmpIfName, err := connector.SetupIpvlan(ep.ContainerID, int(conf.DeviceMTU), index, ep)
 		if err != nil {
-			if err = netlink.LinkDel(ipvlan); err != nil {
-				logger.WithError(err).WithField(logfields.Ipvlan, ipvlan.Name).Warn("failed to clean up and delete ipvlan")
-			}
+			return err
 		}
-	}()
 
-	if err = netlink.LinkSetNsFd(*link, int(netNs.Fd())); err != nil {
-		return fmt.Errorf("unable to move ipvlan slave '%v' to netns: %s", link, err)
+		defer func() {
+			if err != nil {
+				if err = netlink.LinkDel(ipvlan); err != nil {
+					logger.WithError(err).WithField(logfields.Ipvlan, ipvlan.Name).Warn("failed to clean up and delete ipvlan")
+				}
+			}
+		}()
+
+		if err = netlink.LinkSetNsFd(*link, int(netNs.Fd())); err != nil {
+			return fmt.Errorf("unable to move ipvlan slave '%v' to netns: %s", link, err)
+		}
+
+		mapFD, mapID, err := connector.SetupIpvlanRemoteNs(netNs, tmpIfName, args.IfName)
+		if err != nil {
+			return err
+		}
+
+		ep.MapID = int64(mapID)
+		defer func() {
+			unix.Close(mapFD)
+		}()
 	}
-
-	mapFD, mapID, err := connector.SetupIpvlanRemoteNs(netNs, tmpIfName, args.IfName)
-	if err != nil {
-		return err
-	}
-
-	ep.MapID = int64(mapID)
-	defer func() {
-		unix.Close(mapFD)
-	}()
 
 	ipam, err := c.IPAMAllocate("")
 	if err != nil {
