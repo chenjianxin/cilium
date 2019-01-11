@@ -267,6 +267,12 @@ func LaunchAsEndpoint(owner endpoint.Owner, hostAddressing *models.NodeAddressin
 		return fmt.Errorf("Error while adding endpoint: %s", err)
 	}
 
+	if err := ep.LockAlive(); err != nil {
+		return err
+	}
+	ep.SetStateLocked(endpoint.StateWaitingToRegenerate, "Regenerating health daemon after insertion to endpointmanager")
+	ep.Unlock()
+
 	buildSuccessful := <-ep.Regenerate(owner, &endpoint.ExternalRegenerationMetadata{
 		Reason: "health daemon bootstrap",
 	})
